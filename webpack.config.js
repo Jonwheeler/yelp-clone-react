@@ -1,14 +1,15 @@
 const NODE_ENV = process.env.NODE_ENV;
+const dotenv   = require('dotenv');
 
 const webpack = require("webpack");
-const fs = require("fs");
-const path = require("path"),
-      join = path.join,
+const fs      = require("fs");
+const path    = require("path"),
+      join    = path.join,
       resolve = path.resolve;
 
 const getConfig = require("hjs-webpack");
 
-const isDev = NODE_ENV === 'development';
+const isDev  = NODE_ENV === 'development';
 const isTest = NODE_ENV === 'test';
 
 const root    = resolve(__dirname);
@@ -19,9 +20,9 @@ const dest    = join(root, 'dist');
 const cssModulesNames = `${isDev ? '[path][name]__[local]__' : ''}[hash:base64:5]`;
 
 let config = getConfig({
-  isDev: isDev,
-  in: join(src, 'app.js'),
-  out: dest,
+  isDev:            isDev,
+  in:               join(src, 'app.js'),
+  out:              dest,
   clearBeforeBuild: true
 });
 
@@ -57,5 +58,27 @@ config.module.loaders.push({
   include: [modules],
   loader: 'style!css'
 });
+
+const dotEnvVars     = dotenv.config();
+const environmentEnv = dotenv.config({
+  path:   join(root, 'config', `${NODE_ENV}.config.js`),
+  silent: true,
+});
+
+const envVariables = Object.assign({}, dotEnvVars, environmentEnv);
+
+const defines = Object.keys(envVariables)
+  .reduce((memo, key) => {
+    const val = JSON.stringify(envVariables[key]);
+    memo[`__${key.toUpperCase()}__`] = val;
+    return memo;
+  }, {
+    __NODE_ENV__: JSON.stringify(NODE_ENV)
+  }
+);
+
+config.plugins = [
+  new webpack.DefinePlugin(defines)
+].concat(config.plugins);
 
 module.exports = config;
