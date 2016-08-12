@@ -26,6 +26,14 @@ let config = getConfig({
   clearBeforeBuild: true
 });
 
+config.resolve.root  = [src, modules];
+config.resolve.alias = {
+  'css':        join(src, 'styles'),
+  'containers': join(src, 'containers'),
+  'components': join(src, 'components'),
+  'utils':      join(src, 'utils')
+};
+
 config.postcss = [].concat([
   require('precss')({}),
   require('autoprefixer')({}),
@@ -43,9 +51,9 @@ const findLoader = (loaders, match) => {
 const cssloader = findLoader(config.module.loaders, matchCssLoaders);
 
 const newloader = Object.assign({}, cssloader, {
-  test: /\.module\.css$/,
+  test:    /\.module\.css$/,
   include: [src],
-  loader: cssloader.loader
+  loader:  cssloader.loader
     .replace(matchCssLoaders, `$1$2?modules&localIdentName=${cssModulesNames}$3`)
 });
 
@@ -54,9 +62,9 @@ cssloader.test   = new RegExp(`[^module]${cssloader.test.source}`);
 cssloader.loader = newloader.loader;
 
 config.module.loaders.push({
-  test: /\.css$/,
+  test:    /\.css$/,
   include: [modules],
-  loader: 'style!css'
+  loader:  'style!css'
 });
 
 const dotEnvVars     = dotenv.config();
