@@ -1,3 +1,5 @@
+require('babel-register');
+
 const NODE_ENV = process.env.NODE_ENV;
 const dotenv   = require('dotenv');
 
@@ -25,6 +27,25 @@ let config = getConfig({
   out:              dest,
   clearBeforeBuild: true
 });
+
+
+if (isTest) {
+  config.externals = {
+    'react/lib/ReactContext': true,
+    'react/lib/ExecutionEnvironment': true
+  }
+
+  config.plugins = config.plugins.filter(p => {
+    const name = p.constructor.toString();
+    const fnName = name.match(/^function (.*)\((.*\))/)
+
+    const idx = [
+      'DedupePlugin',
+      'UglifyJsPlugin'
+    ].indexOf(fnName[1]);
+    return idx < 0;
+  })
+};
 
 config.resolve.root  = [src, modules];
 config.resolve.alias = {
